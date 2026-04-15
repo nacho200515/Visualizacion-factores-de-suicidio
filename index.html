@@ -1,1 +1,65 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualización: PIB vs Salud Mental</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; color: #2c3e50; }
+        .hero-section { background: #1b2631; color: white; padding: 60px 0; margin-bottom: 40px; }
+        .chart-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .footer { margin-top: 50px; padding: 20px; font-size: 0.9rem; color: #7f8c8d; }
+        .badge-chile { background-color: #ff0000; color: white; padding: 5px 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <header class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">¿Compra el dinero la salud mental?</h1>
+            <p class="lead">Un análisis de la correlación entre el PIB per cápita y las tasas de suicidio global</p>
+        </div>
+    </header>
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                
+                <div class="chart-container text-center">
+                    <img src="grafico_pib_suicidio_vibrante.png" alt="Gráfico de Dispersión PIB vs Suicidio" class="img-fluid rounded mb-4">
+                    
+                    <div class="text-start mt-4">
+                        <h3 class="h4">Análisis de la Visualización</h3>
+                        <p>
+                            Este gráfico de dispersión utiliza una <strong>escala logarítmica</strong> para el eje X (PIB per cápita) con el fin de representar mejor la disparidad económica entre naciones. La línea de tendencia punteada indica la dirección general de la relación, mientras que el punto <span class="badge-chile">Chile 🇨🇱</span> resalta la posición de nuestro país en este contexto global.
+                        </p>
+                        <hr>
+                        <h5>Hallazgos clave:</h5>
+                        <ul>
+                            <li><strong>Tendencia:</strong> La regresión lineal nos permite observar si existe un patrón de crecimiento o descenso vinculado al desarrollo económico.</li>
+                            <li><strong>Outliers:</strong> Se identifican países que, pese a su alto PIB, mantienen tasas de suicidio elevadas, desafiando la idea de que la riqueza económica soluciona las crisis de salud mental.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <section class="mt-5 p-4 bg-light rounded border">
+                    <h4>Ficha Técnica</h4>
+                    <p class="mb-1"><strong>Fuentes:</strong> GHDx (IHME) y Registros de Desarrollo del Banco Mundial / OCDE.</p>
+                    <p class="mb-1"><strong>Año de análisis:</strong> 2016</p>
+                    <p><strong>Herramientas:</strong> Python (Pandas, Seaborn, Matplotlib) y despliegue en GitHub Pages.</p>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer text-center">
+        <div class="container">
+            <p>Entrega 1 - Visualización de Información | Ingeniería en Ciencia de Datos - UC</p>
+            <p>© 2026 - Proyecto de Colaboración Grupal</p>
+        </div>
+    </footer>
+
+</body>
+</html>
