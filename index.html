@@ -3,45 +3,712 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualización: PIB vs Suicidio 2020</title>
+    <title>Homicidios y suicidios en el mundo</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
     <style>
-        body { background-color: #ffffff; color: #2c3e50; font-family: sans-serif; }
-        .hero-section { background: #1b2631; color: white; padding: 40px 0; }
-        .chart-container { padding: 20px; margin-top: 20px; }
-        img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
-        .description { max-width: 800px; margin: 30px auto; text-align: left; }
+        :root {
+            --color-texto: #1f2933;
+            --color-texto-suave: #64748b;
+            --color-fondo: #f3f6f8;
+            --color-card: #ffffff;
+            --color-borde: rgba(148, 163, 184, 0.32);
+
+            --color-suicidio: #CC79A7;
+            --color-suicidio-oscuro: #8F3F6D;
+            --color-homicidio: #0072B2;
+            --color-homicidio-oscuro: #004C7A;
+            --color-similar: #999999;
+            --color-similar-oscuro: #4B5563;
+
+            --color-header: #111827;
+            --color-header-2: #243447;
+        }
+
+        body {
+            background: linear-gradient(180deg, var(--color-fondo) 0%, #ffffff 100%);
+            color: var(--color-texto);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--color-header) 0%, #1F2937 55%, var(--color-header-2) 100%);
+            color: white;
+            padding: 44px 0;
+            text-align: center;
+        }
+
+        header h1 {
+            max-width: 1050px;
+            margin: 0 auto;
+            font-size: 2.45rem;
+            line-height: 1.12;
+            letter-spacing: -0.035em;
+        }
+
+        header p {
+            color: #d6e0ea;
+            max-width: 900px;
+            margin: 16px auto 0 auto;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+        }
+
+        .section-card {
+            background-color: var(--color-card);
+            border-radius: 18px;
+            padding: 28px;
+            margin: 28px auto 0 auto;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--color-borde);
+            width: 100%;
+        }
+
+        .intro-question {
+            max-width: 1100px;
+            margin: 0 auto 22px auto;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background-color: #fdf2f8;
+            border-left: 5px solid var(--color-suicidio);
+            color: #4a1d34;
+        }
+
+        .intro-question strong {
+            color: #2f111f;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 9px 18px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: var(--color-homicidio);
+            border-color: var(--color-homicidio);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: var(--color-homicidio-oscuro);
+            border-color: var(--color-homicidio-oscuro);
+        }
+
+        .btn-success {
+            background-color: #2C7A7B;
+            border-color: #2C7A7B;
+        }
+
+        .btn-secondary {
+            background-color: #374151;
+            border-color: #374151;
+        }
+
+        .filters-row {
+            max-width: 1050px;
+            margin: 0 auto 18px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            align-items: end;
+        }
+
+        .filter-box label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--color-header-2);
+            margin-bottom: 5px;
+        }
+
+        .filter-box select {
+            border-radius: 999px;
+            padding: 9px 14px;
+        }
+
+        .year-summary {
+            max-width: 1100px;
+            margin: 0 auto 12px auto;
+            padding: 15px 18px;
+            background-color: #f1f5f9;
+            border-left: 5px solid var(--color-header-2);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .mode-message {
+            max-width: 1100px;
+            margin: 0 auto 18px auto;
+            padding: 13px 16px;
+            border-radius: 10px;
+            background-color: #eef6fb;
+            border-left: 5px solid var(--color-homicidio);
+            color: #1f4057;
+            font-size: 0.95rem;
+        }
+
+        .timeline-section {
+            max-width: 1100px;
+            margin: 0 auto 20px auto;
+            padding: 12px 18px 6px 18px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .timeline-year {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+        }
+
+        .timeline {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 4px;
+            padding-top: 16px;
+        }
+
+        .timeline::before {
+            content: "";
+            position: absolute;
+            top: 24px;
+            left: 18px;
+            right: 18px;
+            height: 3px;
+            background-color: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        .year-dot-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 34px;
+        }
+
+        .year-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--color-header-2);
+            background-color: white;
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .year-dot:hover,
+        .year-dot:focus {
+            transform: scale(1.2);
+            background-color: var(--color-suicidio);
+            border-color: var(--color-header-2);
+            box-shadow: 0 0 0 4px rgba(204, 121, 167, 0.22);
+            outline: none;
+        }
+
+        .year-dot.active {
+            background-color: var(--color-header-2);
+            border-color: var(--color-header-2);
+            transform: scale(1.25);
+        }
+
+        .year-label {
+            font-size: 0.75rem;
+            color: var(--color-texto-suave);
+            user-select: none;
+        }
+
+        .year-dot-wrapper.active .year-label {
+            color: var(--color-header-2);
+            font-weight: 800;
+        }
+
+        .legend-comparison {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 14px;
+            font-size: 0.88rem;
+            color: #374151;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-shape {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid rgba(0,0,0,0.25);
+        }
+
+        .legend-shape.circle {
+            border-radius: 999px;
+            background-color: var(--color-suicidio);
+        }
+
+        .legend-shape.square {
+            border-radius: 3px;
+            background-color: var(--color-homicidio);
+        }
+
+        .legend-shape.diamond {
+            width: 12px;
+            height: 12px;
+            transform: rotate(45deg);
+            background-color: var(--color-similar);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+            gap: 22px;
+            align-items: start;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .viz-column {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .viz-title {
+            text-align: center;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--color-header-2);
+        }
+
+        .viz-subtitle {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--color-texto-suave);
+            margin-bottom: 8px;
+        }
+
+        .plot-box {
+            height: 560px;
+            min-height: 560px;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            background-color: #ffffff;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+        }
+
+        .map-box {
+            height: 540px;
+            min-height: 54S0px;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            background-color: #ffffff;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+        }
+
+        .side-panel {
+            display: grid;
+            grid-template-rows: auto auto;
+            gap: 14px;
+            align-self: start;
+        }
+
+        .info-box {
+            background-color: #f1f5f9;
+            border-left: 5px solid #64748b;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .info-box.active {
+            border-left-color: var(--color-suicidio);
+            background-color: #fdf2f8;
+        }
+
+        .info-box.compact {
+            font-size: 0.95rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .metric-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid var(--color-borde);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--color-texto-suave);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+        }
+
+        .comparison-result {
+            margin-top: 12px;
+            padding: 12px;
+            background-color: white;
+            border-radius: 10px;
+            border: 1px solid var(--color-borde);
+        }
+
+        .context-box {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background-color: rgba(255,255,255,0.78);
+            border-radius: 10px;
+            border: 1px solid #ead2df;
+        }
+
+        .interaction-note {
+            margin-top: 18px;
+            padding: 13px 16px;
+            background-color: #fdf2f8;
+            border-left: 5px solid var(--color-suicidio);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #4a1d34;
+        }
+
+        .warning-note {
+            margin-top: 14px;
+            padding: 13px 16px;
+            background-color: #f8fafc;
+            border-left: 5px solid #64748b;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .explanation-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .explanation-card h4 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+            margin-bottom: 8px;
+        }
+
+        .small-note {
+            font-size: 0.9rem;
+            color: var(--color-texto-suave);
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 25px 0;
+            color: var(--color-texto-suave);
+            text-align: center;
+        }
+
+        .country-panel-wrapper {
+            width: 100%;
+            max-width: 980px;
+            margin: 22px auto 0 auto;
+        }
+
+        .country-panel-wrapper .info-box {
+            width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plot-box {
+                height: 560px;
+                min-height: 560px;
+            }
+
+            .map-box {
+                height: 500px;
+                min-height: 500px;
+            }
+
+            .explanation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .section-card {
+                padding: 20px;
+            }
+
+            .filters-row {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline {
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 18px;
+                padding-bottom: 8px;
+            }
+
+            .timeline::before {
+                left: 18px;
+                right: auto;
+                width: 680px;
+            }
+
+            .plot-box {
+                height: 500px;
+                min-height: 500px;
+            }
+
+            .map-box {
+                height: 460px;
+                min-height: 460px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <header class="hero-section text-center">
+    <header>
         <div class="container">
-            <h1 class="fw-bold">¿Más riqueza implica menor tasa de suicidio?</h1>
-            <p class="lead">Relación entre PIB per cápita y tasas de suicidio global (2020)</p>
+            <h1 class="fw-bold">¿Estamos mirando solo una parte de la violencia?</h1>
+            <p class="lead">
+                Comparación mundial entre tasas de homicidios y suicidios por cada 100.000 habitantes.
+            </p>
         </div>
     </header>
 
-    <main class="container text-center">
-        <div class="chart-container">
-            <img src="grafico.png" alt="Gráfico de Dispersión 2020">
-        </div>
+    <main class="container-fluid px-3 px-lg-4">
 
-        <div class="description">
-            <h3>Análisis de la Visualización</h3>
-            <p>
-                Este gráfico de dispersión analiza la correlación entre la riqueza económica de los países (PIB per cápita) y sus tasas de suicidio durante el año 2020. 
-                Se utiliza una <strong>escala logarítmica</strong> para representar mejor la disparidad económica global y una <strong>codificación por colores</strong> para identificar patrones por continente.
+        <section class="section-card">
+            <div class="intro-question">
+                <p class="mb-1">
+                    <strong>Pregunta guía:</strong> ¿qué tipo de muerte violenta predomina en cada país: homicidio o suicidio?
+                </p>
+                <p class="mb-0">
+                    La visualización no busca decidir directamente el presupuesto público, sino mostrar si la magnitud relativa del suicidio justifica incluir la salud mental con más fuerza en la discusión sobre seguridad y prevención.
+                </p>
+            </div>
+
+            <h2 class="h4 fw-bold text-center mb-3">Comparación directa por país y año</h2>
+
+            <p class="text-center small-note mb-4">
+                Selecciona un año, filtra por región y pasa el cursor sobre un país para ver su comparación. Haz clic para fijarlo.
             </p>
+
+            <div class="button-row">
+                <button id="btnSonido" class="btn btn-primary">
+                    Activar audio
+                </button>
+
+                <button id="btnLimpiar" class="btn btn-secondary">
+                    Limpiar selección
+                </button>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-box">
+                    <label for="filtroRegion">Filtrar por región</label>
+                    <select id="filtroRegion" class="form-select">
+                        <option value="Todas">Todas las regiones</option>
+                    </select>
+                </div>
+
+                <div class="filter-box">
+                    <label for="filtroCategoria">Filtrar por predominio</label>
+                    <select id="filtroCategoria" class="form-select">
+                        <option value="Todas">Todos los países</option>
+                        <option value="Suicidio mayor">Predomina suicidio</option>
+                        <option value="Homicidio mayor">Predomina homicidio</option>
+                        <option value="Tasas similares">Tasas similares</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="resumenAnio" class="year-summary">
+                Cargando resumen del año seleccionado...
+            </div>
+
+            <div id="mensajeModo" class="mode-message">
+                <strong>Cómo leer el gráfico:</strong> cada punto es un país. La línea diagonal marca igualdad entre homicidios y suicidios. Sobre la línea predominan los suicidios; bajo la línea predominan los homicidios. Además, se usan símbolos distintos para no depender solo del color.
+            </div>
+
+            <div class="timeline-section">
+                <div class="timeline-header">
+                    <span class="fw-bold">Año seleccionado:</span>
+                    <span id="yearLabel" class="timeline-year">2018</span>
+                </div>
+
+                <div id="yearTimeline" class="timeline"></div>
+            </div>
+
+            <div class="legend-comparison">
+                <span class="legend-item">
+                    <i class="legend-shape circle"></i> Predomina suicidio
+                </span>
+                <span class="legend-item">
+                    <i class="legend-shape square"></i> Predomina homicidio
+                </span>
+                <span class="legend-item">
+                    <i class="legend-shape diamond"></i> Tasas similares
+                </span>
+            </div>
+
+            <div class="main-grid">
+                <div class="viz-column">
+                    <h3 class="h5 viz-title">Relación entre homicidios y suicidios</h3>
+                    <p class="viz-subtitle">
+                        Eje X: homicidios. Eje Y: suicidios. Tasas por cada 100.000 habitantes.
+                    </p>
+                    <div id="scatterComparacion" class="plot-box"></div>
+                </div>
+
+                <div class="viz-column">
+                    <h3 class="h5 viz-title">Mapa de diferencia</h3>
+                    <p class="viz-subtitle">
+                        Diferencia = suicidios − homicidios.
+                    </p>
+                    <div id="mapaDiferencia" class="map-box"></div>
+                </div>
+            </div>
+
+            <div class="country-panel-wrapper">
+                <h3 class="h6 fw-bold text-center">País activo</h3>
+                <div id="infoPais" class="info-box compact">
+                    <p class="mb-1">
+                        Pasa el cursor sobre un país para comparar ambas tasas.
+                    </p>
+                    <p class="mb-0 small-note">
+                        Haz clic para fijarlo y escuchar la sonificación cuando esté activada.
+                    </p>
+                </div>
+            </div>
+
+            <div class="interaction-note">
+                <strong>Lectura del mensaje:</strong> si muchos países aparecen sobre la diagonal, significa que en esos casos el suicidio supera al homicidio como tasa de muerte violenta. Esto permite cuestionar si la discusión pública sobre seguridad considera suficientemente la salud mental.
+            </div>
+
+            <div class="warning-note">
+                <strong>Precaución interpretativa:</strong> estos datos permiten comparar magnitudes, pero no prueban causalidad ni determinan por sí solos cómo debería distribuirse el presupuesto público.
+            </div>
+        </section>
+
+        <section class="section-card">
+            <h3 class="h5 fw-bold mb-3">Decisiones de diseño e interacción</h3>
+
+            <div class="explanation-grid">
+                <div class="explanation-card">
+                    <h4>Diseño visual</h4>
+                    <p class="mb-0">
+                        Se eligió un gráfico de dispersión porque permite comparar directamente dos variables numéricas: homicidios y suicidios. La línea diagonal funciona como referencia de igualdad entre ambas tasas.
+                    </p>
+                </div>
+
+                <div class="explanation-card">
+                    <h4>Interacción</h4>
+                    <p class="mb-0">
+                        La línea temporal, los filtros, el hover y el click permiten explorar el dataset por año, región, predominio y país. El panel lateral entrega detalles bajo demanda sin saturar la visualización principal.
+                    </p>
+                </div>
+
+                <div class="explanation-card">
+                    <h4>Sonificación</h4>
+                    <p class="mb-0">
+                        La sonificación refuerza la comparación: tonos más graves representan predominio de homicidios y tonos más agudos representan predominio de suicidios. Al fijar un país, se escuchan ambas tasas consecutivamente.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card">
+            <h3 class="h5 fw-bold">Mensaje principal</h3>
             <p>
-                La línea de tendencia punteada permite observar el comportamiento global de los datos, ayudando a cuestionar si el desarrollo económico se traduce necesariamente en un mayor bienestar social.
+                Esta visualización muestra que en muchos países la tasa de suicidios iguala o supera a la tasa de homicidios. Al comparar ambas tasas con la misma unidad de medida, se busca poner en perspectiva la salud mental como una dimensión relevante dentro de la discusión sobre seguridad, prevención y muertes violentas.
             </p>
-        </div>
+        </section>
+
+        <section class="section-card">
+            <h3 class="h5 fw-bold">Fuente y procesamiento de datos</h3>
+            <p class="mb-1">
+                Los datos fueron procesados para conservar países y años con información disponible tanto para homicidios como para suicidios.
+            </p>
+            <p class="small-note mb-0">
+                Se utilizan tasas por cada 100.000 habitantes para permitir una comparación más justa entre países con distintas poblaciones. Además, se calcularon variables derivadas como diferencia, razón y categoría comparativa.
+            </p>
+        </section>
+
     </main>
 
-    <footer class="text-center py-4 text-muted">
-        <p>Entrega 1 - Visualización de Información | Ingeniería en Ciencia de Datos - UC</p>
+    <footer>
+        <p class="mb-0">
+            Entrega 2 - Visualización de Información
+        </p>
     </footer>
+
+    <script src="script.js"></script>
 
 </body>
 </html>
