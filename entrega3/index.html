@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrega 3 - Homicidios y suicidios por continente</title>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
+<style>
+    :root {
+        --color-suicidio: #CC79A7;
+        --color-suicidio-oscuro: #8F3F6D;
+        --color-homicidio: #0072B2;
+        --color-homicidio-oscuro: #004C7A;
+        --color-similar: #6B7280;
+        --color-texto: #1f2933;
+        --color-texto-suave: #64748b;
+        --color-fondo: #eef2f7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--color-texto);
+        background: linear-gradient(180deg, var(--color-fondo) 0%, #ffffff 100%);
+        overflow: hidden; /* sin scroll, todo cabe en una pantalla */
+    }
+
+    .contenedor {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+        font-weight: 800;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.02em;
+    }
+
+    .subtitulo {
+        color: var(--color-texto-suave);
+        font-size: 0.95rem;
+        margin: 0 0 16px 0;
+        max-width: 560px;
+    }
+
+    .tarjeta {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 18px 26px 10px 26px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        width: 100%;
+        max-width: 740px;
+    }
+
+    #grafico {
+        width: 100%;
+    }
+
+    .linea-homicidio {
+        fill: none;
+        stroke: var(--color-homicidio);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .linea-suicidio {
+        fill: none;
+        stroke: var(--color-suicidio);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .area-homicidio {
+        fill: var(--color-homicidio);
+        opacity: 0.10;
+    }
+
+    .area-suicidio {
+        fill: var(--color-suicidio);
+        opacity: 0.10;
+    }
+
+    .punto-glow {
+        opacity: 0.18;
+    }
+
+    .eje text {
+        font-size: 0.75rem;
+        fill: var(--color-texto-suave);
+    }
+
+    .eje line, .eje path {
+        stroke: #cbd5e1;
+    }
+
+    .leyenda {
+        display: flex;
+        gap: 22px;
+        justify-content: center;
+        margin-top: 4px;
+        font-size: 0.85rem;
+    }
+
+    .leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .leyenda-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+    }
+
+    .fila-inferior {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+
+    .anio-actual {
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+
+    .badge-predominio {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: white;
+        background-color: var(--color-similar);
+        transition: background-color 0.3s ease;
+    }
+
+    .controles {
+        margin-top: 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    button {
+        border: none;
+        border-radius: 999px;
+        padding: 9px 18px;
+        font-weight: 700;
+        cursor: pointer;
+        background-color: #243447;
+        color: white;
+    }
+
+    button:hover {
+        background-color: #1c2937;
+    }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+    <h1 id="titulo">Continente</h1>
+    <p class="subtitulo">
+        Evolución 2000–2018 de la tasa promedio de homicidios y suicidios (por cada 100.000 habitantes).
+    </p>
+
+    <div class="tarjeta">
+        <div id="grafico"></div>
+
+        <div class="leyenda">
+            <span class="leyenda-item">
+                <span class="leyenda-color" style="background-color:#0072B2;"></span> Homicidios
+            </span>
+            <span class="leyenda-item">
+                <span class="leyenda-color" style="background-color:#CC79A7;"></span> Suicidios
+            </span>
+        </div>
+
+        <div class="fila-inferior">
+            <span class="anio-actual" id="anioActual">Año: —</span>
+            <span class="badge-predominio" id="badgePredominio">—</span>
+        </div>
+    </div>
+
+    <div class="controles">
+        <button id="btnPlay">▶ Reproducir con sonido</button>
+        <button id="btnReiniciar">⟲ Reiniciar</button>
+    </div>
+</div>
+
+<script src="script_E3.js"></script>
+</body>
+</html>
