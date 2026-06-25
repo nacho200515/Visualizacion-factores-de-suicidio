@@ -1,289 +1,753 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Entrega 3 - Homicidios y suicidios por continente</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homicidios y suicidios en el mundo</title>
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<style>
-    :root {
-        --color-suicidio: #CC79A7;
-        --color-suicidio-oscuro: #8F3F6D;
-        --color-homicidio: #0072B2;
-        --color-homicidio-oscuro: #004C7A;
-        --color-similar: #6B7280;
-        --color-texto: #1f2933;
-        --color-texto-suave: #64748b;
-        --color-fondo: #eef2f7;
-        --color-tema: #243447;
-    }
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 
-    * { box-sizing: border-box; }
+    <style>
+        :root {
+            --color-texto: #1f2933;
+            --color-texto-suave: #64748b;
+            --color-fondo: #cacccd;
+            --color-card: #ffffff;
+            --color-borde: rgba(148, 163, 184, 0.32);
 
-    html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        font-family: Arial, Helvetica, sans-serif;
-        color: var(--color-texto);
-        background: linear-gradient(180deg, var(--color-fondo) 0%, #ffffff 100%);
-        overflow-y: auto;
-        overflow-x: hidden; /* pensado para una sola pantalla; con scroll de respaldo en celulares chicos */
-    }
+            --color-suicidio: #CC79A7;
+            --color-suicidio-oscuro: #8F3F6D;
+            --color-homicidio: #0072B2;
+            --color-homicidio-oscuro: #004C7A;
+            --color-similar: #999999;
+            --color-similar-oscuro: #4B5563;
 
-    #fondoContinente {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        opacity: 0.5;
-        pointer-events: none;
-        transition: opacity 0.4s ease;
-        /* el JS calcula y aplica transform/transform-origin según el tamaño real del continente dibujado */
-    }
+            --color-header: #111827;
+            --color-header-2: #243447;
+        }
 
-    .contenedor {
-        position: relative;
-        z-index: 1;
-        width: 100%;
-        min-height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        text-align: center;
-    }
+        html,
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
 
-    h1 {
-        font-size: 1.7rem;
-        font-weight: 800;
-        margin: 0 0 4px 0;
-        letter-spacing: -0.02em;
-        color: var(--color-tema);
-        transition: color 0.4s ease;
-    }
+        body {
+            background: linear-gradient(180deg, var(--color-fondo) 0%, #ffffff 100%);
+            color: var(--color-texto);
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
+        }
 
-    .subtitulo {
-        color: var(--color-texto-suave);
-        font-size: 0.95rem;
-        margin: 0 0 16px 0;
-        max-width: 560px;
-    }
+        header {
+            background: linear-gradient(135deg, var(--color-header) 0%, #1F2937 55%, var(--color-header-2) 100%);
+            color: white;
+            padding: 36px 0;
+            text-align: center;
+        }
 
-    .tarjeta {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 18px 26px 10px 26px;
-        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
-        border: 1px solid rgba(148, 163, 184, 0.25);
-        width: 100%;
-        max-width: 740px;
-    }
+        header h1 {
+            max-width: 1050px;
+            margin: 0 auto;
+            font-size: 2.35rem;
+            line-height: 1.12;
+            letter-spacing: -0.035em;
+        }
 
-    #grafico {
-        width: 100%;
-    }
+        header p {
+            color: #d6e0ea;
+            max-width: 850px;
+            margin: 12px auto 0 auto;
+            font-size: 1.05rem;
+        }
 
-    .linea-homicidio {
-        fill: none;
-        stroke: var(--color-homicidio);
-        stroke-width: 3;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
+        main {
+            width: 100%;
+            max-width: 1380px;
+            margin: 0 auto;
+            overflow-x: hidden;
+        }
 
-    .linea-suicidio {
-        fill: none;
-        stroke: var(--color-suicidio);
-        stroke-width: 3;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
+        .section-card {
+            background-color: var(--color-card);
+            border-radius: 18px;
+            padding: 26px;
+            margin: 24px auto 0 auto;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--color-borde);
+            width: 100%;
+            overflow-x: hidden;
+        }
 
-    .area-homicidio {
-        fill: var(--color-homicidio);
-        opacity: 0.10;
-    }
+        .question-strip {
+            max-width: 1120px;
+            margin: 0 auto 18px auto;
+            padding: 16px 20px;
+            border-radius: 14px;
+            background-color: #fdf2f8;
+            border-left: 5px solid var(--color-suicidio);
+            color: #4a1d34;
+            text-align: center;
+        }
 
-    .area-suicidio {
-        fill: var(--color-suicidio);
-        opacity: 0.10;
-    }
+        .question-strip h2 {
+            font-size: 1.28rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #2f111f;
+        }
 
-    .punto-glow {
-        opacity: 0.18;
-    }
+        .question-strip p {
+            margin: 0;
+            color: #5f334a;
+        }
 
-    .eje text {
-        font-size: 0.75rem;
-        fill: var(--color-texto-suave);
-    }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
 
-    .eje line, .eje path {
-        stroke: #cbd5e1;
-    }
+        .btn {
+            border-radius: 999px;
+            padding: 9px 18px;
+            font-weight: 600;
+        }
 
-    .leyenda {
-        display: flex;
-        gap: 22px;
-        justify-content: center;
-        margin-top: 4px;
-        font-size: 0.85rem;
-    }
+        .btn-primary {
+            background-color: var(--color-homicidio);
+            border-color: var(--color-homicidio);
+        }
 
-    .leyenda-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: var(--color-homicidio-oscuro);
+            border-color: var(--color-homicidio-oscuro);
+        }
 
-    .leyenda-color {
-        width: 14px;
-        height: 14px;
-        border-radius: 3px;
-    }
+        .btn-success {
+            background-color: #2C7A7B;
+            border-color: #2C7A7B;
+        }
 
-    .fila-inferior {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
-        margin-top: 14px;
-        flex-wrap: wrap;
-    }
+        .btn-secondary {
+            background-color: #374151;
+            border-color: #374151;
+        }
 
-    .anio-actual {
-        font-weight: 800;
-        font-size: 1.1rem;
-    }
+        .filters-row {
+            max-width: 1150px;
+            margin: 0 auto 16px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            align-items: end;
+        }
 
-    .badge-predominio {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: white;
-        background-color: var(--color-similar);
-        transition: background-color 0.3s ease;
-    }
+        .filter-box label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--color-header-2);
+            margin-bottom: 5px;
+        }
 
-    .controles {
-        margin-top: 16px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
+        .filter-box select {
+            border-radius: 999px;
+            padding: 9px 14px;
+        }
 
-    button {
-        border: none;
-        border-radius: 999px;
-        padding: 9px 18px;
-        font-weight: 700;
-        cursor: pointer;
-        background-color: #243447;
-        color: white;
-    }
+        .year-summary {
+            max-width: 1120px;
+            margin: 0 auto 14px auto;
+            padding: 15px 18px;
+            background-color: #f1f5f9;
+            border-left: 5px solid var(--color-header-2);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1rem;
+        }
 
-    button:hover {
-        background-color: #1c2937;
-    }
+        .interaction-help {
+            max-width: 1120px;
+            margin: 0 auto 16px auto;
+            padding: 11px 14px;
+            border-radius: 10px;
+            background-color: #eef6fb;
+            border-left: 5px solid var(--color-homicidio);
+            color: #1f4057;
+            font-size: 0.93rem;
+            text-align: center;
+        }
 
-    .selector-titulo {
-        margin-top: 18px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--color-texto-suave);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
+        .timeline-section {
+            max-width: 1120px;
+            margin: 0 auto 18px auto;
+            padding: 10px 18px 4px 18px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
 
-    .selector-continentes {
-        margin-top: 8px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: 620px;
-    }
+        .timeline-header {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
-    .chip-continente {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        background: white;
-        border-radius: 999px;
-        padding: 6px 13px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--color-texto-suave);
-        cursor: pointer;
-    }
+        .timeline-year {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+        }
 
-    .chip-continente:hover {
-        border-color: var(--color-texto-suave);
-    }
+        .timeline {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 4px;
+            padding-top: 16px;
+            min-width: 760px;
+        }
 
-    .chip-continente.activo {
-        background: var(--color-tema);
-        color: white;
-        border-color: var(--color-tema);
-    }
+        .timeline::before {
+            content: "";
+            position: absolute;
+            top: 24px;
+            left: 18px;
+            right: 18px;
+            height: 3px;
+            background-color: #cbd5e1;
+            border-radius: 999px;
+        }
 
-    .chip-punto {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-</style>
+        .year-dot-wrapper {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 34px;
+        }
+
+        .year-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--color-header-2);
+            background-color: white;
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .year-dot:hover,
+        .year-dot:focus {
+            transform: scale(1.2);
+            background-color: var(--color-suicidio);
+            border-color: var(--color-header-2);
+            box-shadow: 0 0 0 4px rgba(204, 121, 167, 0.22);
+            outline: none;
+        }
+
+        .year-dot.active {
+            background-color: var(--color-header-2);
+            border-color: var(--color-header-2);
+            transform: scale(1.25);
+        }
+
+        .year-label {
+            font-size: 0.72rem;
+            color: var(--color-texto-suave);
+            user-select: none;
+        }
+
+        .year-dot-wrapper.active .year-label {
+            color: var(--color-header-2);
+            font-weight: 800;
+        }
+
+        .legend-comparison {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 14px;
+            font-size: 0.88rem;
+            color: #374151;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-shape {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid rgba(0,0,0,0.25);
+        }
+
+        .legend-shape.circle {
+            border-radius: 999px;
+            background-color: var(--color-suicidio);
+        }
+
+        .legend-shape.square {
+            border-radius: 3px;
+            background-color: var(--color-homicidio);
+        }
+
+        .legend-shape.diamond {
+            width: 12px;
+            height: 12px;
+            transform: rotate(45deg);
+            background-color: var(--color-similar);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+            gap: 22px;
+            align-items: start;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .viz-column {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .viz-title {
+            text-align: center;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--color-header-2);
+        }
+
+        .viz-subtitle {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--color-texto-suave);
+            margin-bottom: 8px;
+        }
+
+        .plot-box {
+            width: 100%;
+            max-width: 100%;
+            height: 560px;
+            min-height: 560px;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            background-color: #ffffff;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+        }
+
+        .map-box {
+            width: 100%;
+            max-width: 100%;
+            height: 520px;
+            min-height: 520px;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            background-color: #ffffff;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+        }
+
+        .country-panel-wrapper {
+            width: 100%;
+            max-width: 1080px;
+            margin: 22px auto 0 auto;
+        }
+
+        .country-panel-title {
+            text-align: center;
+            font-weight: 800;
+            color: var(--color-header-2);
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background-color: #f1f5f9;
+            border-left: 5px solid #64748b;
+            padding: 18px;
+            border-radius: 14px;
+        }
+
+        .info-box.active {
+            border-left-color: var(--color-suicidio);
+            background-color: #fdf2f8;
+        }
+
+        .info-box.compact {
+            font-size: 0.95rem;
+        }
+
+        .country-result-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 0.86rem;
+            font-weight: 800;
+            background-color: white;
+            border: 1px solid var(--color-borde);
+        }
+
+        .result-pill.suicidio {
+            color: var(--color-suicidio-oscuro);
+        }
+
+        .result-pill.homicidio {
+            color: var(--color-homicidio-oscuro);
+        }
+
+        .result-pill.similar {
+            color: var(--color-similar-oscuro);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .metric-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid var(--color-borde);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--color-texto-suave);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+        }
+
+        .comparison-result {
+            margin-top: 12px;
+            padding: 12px;
+            background-color: white;
+            border-radius: 10px;
+            border: 1px solid var(--color-borde);
+        }
+
+        .context-box {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background-color: rgba(255,255,255,0.78);
+            border-radius: 10px;
+            border: 1px solid #ead2df;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .insight-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .insight-card h4 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+            margin-bottom: 8px;
+        }
+
+        .insight-card p {
+            margin-bottom: 0;
+            color: #475569;
+            font-size: 0.92rem;
+        }
+
+        .lower-info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .lower-info-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--color-borde);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .lower-info-card h4 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--color-header-2);
+            margin-bottom: 8px;
+        }
+
+        details {
+            background: #f8fafc;
+            border: 1px solid var(--color-borde);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 12px;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 800;
+            color: var(--color-header-2);
+        }
+
+        .small-note {
+            font-size: 0.9rem;
+            color: var(--color-texto-suave);
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 25px 0;
+            color: var(--color-texto-suave);
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plot-box {
+                height: 560px;
+                min-height: 560px;
+            }
+
+            .map-box {
+                height: 520px;
+                min-height: 520px;
+            }
+
+            .lower-info-grid,
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .section-card {
+                padding: 20px;
+            }
+
+            .filters-row {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline {
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 18px;
+                padding-bottom: 8px;
+            }
+
+            .timeline::before {
+                left: 18px;
+                right: auto;
+                width: 760px;
+            }
+
+            .plot-box {
+                height: 500px;
+                min-height: 500px;
+            }
+
+            .map-box {
+                height: 460px;
+                min-height: 460px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<div id="fondoContinente"></div>
-
-<div class="contenedor">
-    <h1 id="titulo">Continente</h1>
-    <p class="subtitulo">
-        Evolución 2000–2018 de la tasa promedio de homicidios y suicidios (por cada 100.000 habitantes).
-    </p>
-
-    <div class="tarjeta">
-        <div id="grafico"></div>
-
-        <div class="leyenda">
-            <span class="leyenda-item">
-                <span class="leyenda-color" style="background-color:#0072B2;"></span> Homicidios
-            </span>
-            <span class="leyenda-item">
-                <span class="leyenda-color" style="background-color:#CC79A7;"></span> Suicidios
-            </span>
+    <header>
+        <div class="container">
+            <h1 class="fw-bold">¿Qué muerte violenta predomina en cada país?</h1>
+            <p>
+                Explora si las tasas de suicidio superan, igualan o quedan por debajo de las tasas de homicidio.
+            </p>
         </div>
+    </header>
 
-        <div class="fila-inferior">
-            <span class="anio-actual" id="anioActual">Año: —</span>
-            <span class="badge-predominio" id="badgePredominio">—</span>
-        </div>
-    </div>
+    <main class="container-fluid px-3 px-lg-4">
 
-    <div class="controles">
-        <button id="btnPlay">▶ Reproducir con sonido</button>
-        <button id="btnReiniciar">⟲ Reiniciar</button>
-    </div>
+        <section class="section-card">
 
-    <p class="selector-titulo">Ver otro continente</p>
-    <div class="selector-continentes" id="selectorContinentes"></div>
-</div>
+            <div class="question-strip">
+                <h2>Comparación mundial entre homicidios y suicidios</h2>
+                <p>Selecciona año, región o país para descubrir cómo cambia el predominio entre ambas tasas.</p>
+            </div>
 
-<script src="script_E3.js"></script>
+            <div class="button-row">
+                <button id="btnSonido" class="btn btn-primary">
+                    Activar audio
+                </button>
+
+                <button id="btnLimpiar" class="btn btn-secondary">
+                    Limpiar selección
+                </button>
+            </div>
+
+            <div class="filters-row">
+                <div class="filter-box">
+                    <label for="filtroRegion">Filtrar por continente/región</label>
+                    <select id="filtroRegion" class="form-select">
+                        <option value="Todas">Todas las regiones</option>
+                    </select>
+                </div>
+
+                <div class="filter-box">
+                    <label for="filtroCategoria">Filtrar por predominio</label>
+                    <select id="filtroCategoria" class="form-select">
+                        <option value="Todas">Todos los países</option>
+                        <option value="Suicidio mayor">Predomina suicidio</option>
+                        <option value="Homicidio mayor">Predomina homicidio</option>
+                        <option value="Tasas similares">Tasas similares</option>
+                    </select>
+                </div>
+
+                <div class="filter-box">
+                    <label for="filtroPais">Seleccionar país</label>
+                    <select id="filtroPais" class="form-select">
+                        <option value="Todos">Selecciona un país</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="resumenAnio" class="year-summary">
+                Cargando resumen del año seleccionado...
+            </div>
+
+            <div class="timeline-section">
+                <div class="timeline-header">
+                    <span class="fw-bold">Año seleccionado:</span>
+                    <span id="yearLabel" class="timeline-year">2018</span>
+                </div>
+
+                <div id="yearTimeline" class="timeline"></div>
+            </div>
+
+            <div class="legend-comparison">
+                <span class="legend-item">
+                    <i class="legend-shape circle"></i> Predomina suicidio
+                </span>
+                <span class="legend-item">
+                    <i class="legend-shape square"></i> Predomina homicidio
+                </span>
+                <span class="legend-item">
+                    <i class="legend-shape diamond"></i> Tasas similares
+                </span>
+            </div>
+
+            <div class="main-grid">
+                <div class="viz-column">
+                    <h3 class="h5 viz-title">Relación entre homicidios y suicidios</h3>
+                    <p class="viz-subtitle">
+                        Eje X: homicidios. Eje Y: suicidios. Tasas por cada 100.000 habitantes.
+                    </p>
+                    <div id="scatterComparacion" class="plot-box"></div>
+                </div>
+
+                <div class="viz-column">
+                    <h3 class="h5 viz-title">Mapa de diferencia</h3>
+                    <p class="viz-subtitle">
+                        Diferencia = suicidios − homicidios.
+                    </p>
+                    <div id="mapaDiferencia" class="map-box"></div>
+                </div>
+            </div>
+
+            <div class="country-panel-wrapper">
+                <h3 class="country-panel-title">País activo</h3>
+                <div id="infoPais" class="info-box compact">
+                    <p class="mb-1">
+                        Selecciona un país en el mapa, en el gráfico o desde el selector.
+                    </p>
+                    <p class="mb-0 small-note">
+                        El panel mostrará qué tasa predomina y cuán grande es la diferencia.
+                    </p>
+                </div>
+            </div>
+
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <h4>Patrón del año</h4>
+                    <p id="insightGeneral">Cargando...</p>
+                </div>
+
+                <div class="insight-card">
+                    <h4>Mayor diferencia hacia suicidio</h4>
+                    <p id="insightSuicidio">Cargando...</p>
+                </div>
+
+                <div class="insight-card">
+                    <h4>Mayor diferencia hacia homicidio</h4>
+                    <p id="insightHomicidio">Cargando...</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p class="mb-0">
+            Entrega 2 - Visualización de Información
+        </p>
+    </footer>
+
+    <script src="script.js"></script>
+
 </body>
 </html>

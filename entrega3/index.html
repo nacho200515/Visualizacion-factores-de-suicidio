@@ -7,6 +7,7 @@
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 
 <style>
     :root {
@@ -18,6 +19,7 @@
         --color-texto: #1f2933;
         --color-texto-suave: #64748b;
         --color-fondo: #eef2f7;
+        --color-tema: #243447;
     }
 
     * { box-sizing: border-box; }
@@ -30,12 +32,25 @@
         font-family: Arial, Helvetica, sans-serif;
         color: var(--color-texto);
         background: linear-gradient(180deg, var(--color-fondo) 0%, #ffffff 100%);
-        overflow: hidden; /* sin scroll, todo cabe en una pantalla */
+        overflow-y: auto;
+        overflow-x: hidden; /* pensado para una sola pantalla; con scroll de respaldo en celulares chicos */
+    }
+
+    #fondoContinente {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.5;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+        /* el JS calcula y aplica transform/transform-origin según el tamaño real del continente dibujado */
     }
 
     .contenedor {
+        position: relative;
+        z-index: 1;
         width: 100%;
-        height: 100%;
+        min-height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -49,6 +64,8 @@
         font-weight: 800;
         margin: 0 0 4px 0;
         letter-spacing: -0.02em;
+        color: var(--color-tema);
+        transition: color 0.4s ease;
     }
 
     .subtitulo {
@@ -179,9 +196,60 @@
     button:hover {
         background-color: #1c2937;
     }
+
+    .selector-titulo {
+        margin-top: 18px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--color-texto-suave);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .selector-continentes {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 620px;
+    }
+
+    .chip-continente {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: white;
+        border-radius: 999px;
+        padding: 6px 13px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--color-texto-suave);
+        cursor: pointer;
+    }
+
+    .chip-continente:hover {
+        border-color: var(--color-texto-suave);
+    }
+
+    .chip-continente.activo {
+        background: var(--color-tema);
+        color: white;
+        border-color: var(--color-tema);
+    }
+
+    .chip-punto {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
 </style>
 </head>
 <body>
+
+<div id="fondoContinente"></div>
 
 <div class="contenedor">
     <h1 id="titulo">Continente</h1>
@@ -211,6 +279,9 @@
         <button id="btnPlay">▶ Reproducir con sonido</button>
         <button id="btnReiniciar">⟲ Reiniciar</button>
     </div>
+
+    <p class="selector-titulo">Ver otro continente</p>
+    <div class="selector-continentes" id="selectorContinentes"></div>
 </div>
 
 <script src="script_E3.js"></script>
